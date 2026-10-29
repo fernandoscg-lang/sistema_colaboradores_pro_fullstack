@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>{{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <div id="auth" class="auth-screen" hidden>
+    <section class="auth-card">
+      <div class="brand-mark">SG</div>
+      <p class="eyebrow">GESTÃO DE PESSOAS</p>
+      <h1 id="auth-title">Acessar o sistema</h1>
+      <p id="auth-description" class="muted"></p>
+      <form id="auth-form">
+        <label>Nome de usuário<input name="username" autocomplete="username" required maxlength="80"></label>
+        <label>Senha<input name="password" type="password" autocomplete="current-password" required></label>
+        <label id="confirmation-field" hidden>Confirmar senha
+          <input name="confirmation" type="password" autocomplete="new-password">
+        </label>
+        <button id="auth-submit" class="button primary wide" type="submit">Entrar</button>
+      </form>
+    </section>
+  </div>
+
+  <div id="application" class="app-layout" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="{{ app_name }}">
+        <span class="brand-mark">SG</span>
+        <span><strong>Sistema de Gestão</strong><small>Corporativo</small></span>
+      </a>
+      <p class="nav-caption">ÁREA DE TRABALHO</p>
+      <nav id="navigation" aria-label="Navegação principal"></nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="user-avatar"></div>
+        <div class="user-meta"><strong id="user-name"></strong><small id="user-role"></small></div>
+        <button id="logout" class="icon-button" type="button" title="Sair" aria-label="Sair">↗</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar">
+        <div><p class="eyebrow">MÓDULO DE GESTÃO DE PESSOAS</p><h1 id="page-title">Visão geral</h1></div>
+        <button id="theme-toggle" class="button quiet" type="button">Alternar tema</button>
+      </header>
+      <section id="dashboard" class="dashboard" hidden></section>
+      <section id="module-panel" class="module-panel" hidden></section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
