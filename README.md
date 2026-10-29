@@ -1,8 +1,7 @@
 # Sistema de Gestão Corporativo
 
 Aplicação web local para gestão de pessoas, executada em Python/Flask e acessada
-no navegador. O aplicativo mantém o nome, o banco SQLite, as tabelas, as contas
-e as configurações já usadas pela versão desktop.
+no navegador.
 
 ## Executar
 
@@ -12,10 +11,16 @@ e as configurações já usadas pela versão desktop.
 4. O navegador abrirá em `http://127.0.0.1:5000`.
 
 Na primeira execução, crie a conta de administrador. Se o banco já tiver contas,
-use as credenciais existentes.
+use as credenciais existentes. Caso não dê a opção de criar usuário e senha no primeiro
+acesso coloque as seguintes credenciais:
+Usuário: admin
+Senha: 12345678
 
 O servidor escuta apenas em `127.0.0.1` e não expõe a aplicação à rede. É possível
-definir outra porta local com a variável de ambiente `PORT`.
+definir outra porta local com a variável de ambiente `PORT` e também apontar um caminho 
+para um servidor onde rodará o banco de dados, podendo ser visualizado em qualquer 
+computador que esteja apontado para a mesma pasta. Só administradores podem alterar 
+este caminho.
 
 ## Recursos
 
