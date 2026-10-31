@@ -31,6 +31,70 @@ class WebApplicationTests(unittest.TestCase):
     def headers(self):
         return {'X-CSRF-Token': self.csrf}
 
+    def test_database_has_ten_enforced_foreign_keys(self):
+        with legacy.connect_db() as conn:
+            foreign_key_count = sum(
+                len(conn.execute(f'PRAGMA foreign_key_list({table})').fetchall())
+                for table in (
+                    'dependentes',
+                    'contracheques',
+                    'ponto',
+                    'ferias',
+                    'treinamento_inscricoes',
+                    'usuarios',
+                    'beneficios',
+                    'avaliacoes_desempenho',
+                )
+            )
+            self.assertEqual(foreign_key_count, 10)
+            self.assertEqual(conn.execute('PRAGMA foreign_keys').fetchone()[0], 1)
+            with self.assertRaises(legacy.sqlite3.IntegrityError):
+                conn.execute(
+                    'INSERT INTO beneficios '
+                    '(funcionario_id, tipo, descricao, valor, data_inicio) '
+                    'VALUES (?, ?, ?, ?, ?)',
+                    (9999, 'Plano', 'Plano de saúde', 100, '2026-01-01'),
+                )
+
+    def test_init_db_migrates_existing_users_table(self):
+        legacy.DB_PATH = Path(self.temp_dir.name) / 'legacy.db'
+        conn = legacy.sqlite3.connect(legacy.DB_PATH)
+        try:
+            conn.execute(
+                '''
+                CREATE TABLE usuarios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password_salt TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    role TEXT NOT NULL CHECK (role IN ('Administrador', 'Usuário')),
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+                '''
+            )
+            conn.execute(
+                'INSERT INTO usuarios (username, password_salt, password_hash, role) '
+                'VALUES (?, ?, ?, ?)',
+                ('admin-antigo', 'salt', 'hash', 'Administrador'),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        legacy.init_db()
+        legacy.init_db()
+        with legacy.connect_db() as conn:
+            columns = {row['name'] for row in conn.execute('PRAGMA table_info(usuarios)')}
+            self.assertIn('funcionario_id', columns)
+            self.assertEqual(
+                conn.execute('SELECT username FROM usuarios').fetchone()['username'],
+                'admin-antigo',
+            )
+            self.assertEqual(
+                len(conn.execute('PRAGMA foreign_key_list(usuarios)').fetchall()),
+                1,
+            )
+
     def create_admin(self):
         response = self.client.post(
             '/api/auth/setup',
