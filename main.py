@@ -322,6 +322,7 @@ class ReportTextParser(HTMLParser):
 def connect_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA foreign_keys = ON')
     try:
         with conn:
             yield conn
@@ -379,6 +380,18 @@ def init_db():
             )
             '''
         )
+        user_columns = {
+            row['name'] for row in conn.execute('PRAGMA table_info(usuarios)')
+        }
+        if 'funcionario_id' not in user_columns:
+            conn.execute(
+                'ALTER TABLE usuarios ADD COLUMN funcionario_id INTEGER '
+                'REFERENCES funcionarios(id) ON DELETE SET NULL'
+            )
+        conn.execute(
+            'CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_funcionario_id '
+            'ON usuarios(funcionario_id)'
+        )
         conn.execute(
             '''
             CREATE TABLE IF NOT EXISTS dependentes (
@@ -387,6 +400,34 @@ def init_db():
                 nome TEXT NOT NULL,
                 parentesco TEXT NOT NULL,
                 FOREIGN KEY(funcionario_id) REFERENCES funcionarios(id)
+            )
+            '''
+        )
+        conn.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS beneficios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                funcionario_id INTEGER NOT NULL,
+                tipo TEXT NOT NULL,
+                descricao TEXT NOT NULL,
+                valor REAL NOT NULL CHECK (valor >= 0),
+                data_inicio TEXT NOT NULL,
+                ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+                FOREIGN KEY(funcionario_id) REFERENCES funcionarios(id) ON DELETE CASCADE
+            )
+            '''
+        )
+        conn.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS avaliacoes_desempenho (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                funcionario_id INTEGER NOT NULL,
+                avaliador_id INTEGER,
+                nota REAL NOT NULL CHECK (nota >= 0 AND nota <= 10),
+                comentarios TEXT NOT NULL DEFAULT '',
+                data_avaliacao TEXT NOT NULL DEFAULT CURRENT_DATE,
+                FOREIGN KEY(funcionario_id) REFERENCES funcionarios(id) ON DELETE CASCADE,
+                FOREIGN KEY(avaliador_id) REFERENCES usuarios(id) ON DELETE SET NULL
             )
             '''
         )
@@ -2697,6 +2738,15 @@ class RHDesktopApp(tk.Tk):
                 conn.execute('DELETE FROM contracheques WHERE funcionario_id = ?', (colaborador_id,))
                 conn.execute('DELETE FROM ponto WHERE funcionario_id = ?', (colaborador_id,))
                 conn.execute('DELETE FROM ferias WHERE funcionario_id = ?', (colaborador_id,))
+                conn.execute(
+                    'DELETE FROM treinamento_inscricoes WHERE funcionario_id = ?',
+                    (colaborador_id,),
+                )
+                conn.execute('DELETE FROM beneficios WHERE funcionario_id = ?', (colaborador_id,))
+                conn.execute(
+                    'DELETE FROM avaliacoes_desempenho WHERE funcionario_id = ?',
+                    (colaborador_id,),
+                )
                 conn.execute('DELETE FROM funcionarios WHERE id = ?', (colaborador_id,))
             self.load_all_data()
 
