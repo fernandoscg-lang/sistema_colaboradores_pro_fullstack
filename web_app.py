@@ -494,7 +494,14 @@ def create_app(test_config=None):
         with legacy.connect_db() as conn:
             if module == 'employees':
                 conn.execute('DELETE FROM treinamento_inscricoes WHERE funcionario_id = ?', (record_id,))
-                for related_table in ('dependentes', 'contracheques', 'ponto', 'ferias'):
+                for related_table in (
+                    'dependentes',
+                    'contracheques',
+                    'ponto',
+                    'ferias',
+                    'beneficios',
+                    'avaliacoes_desempenho',
+                ):
                     conn.execute(
                         f'DELETE FROM {related_table} WHERE funcionario_id = ?',
                         (record_id,),
